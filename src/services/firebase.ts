@@ -88,6 +88,7 @@ export const sendPush = async ({
   response.responses.forEach((res, idx) => {
     if (!res.success) {
       const code = res.error?.code;
+      console.error(`[firebase] Token[${idx}] failed — code: ${code}, message: ${res.error?.message}`);
       if (
         code === "messaging/invalid-registration-token" ||
         code === "messaging/registration-token-not-registered"
