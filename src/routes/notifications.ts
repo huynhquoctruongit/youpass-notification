@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 
 import { requireAuth } from "../middleware/auth";
+import { requireApiKey } from "../middleware/apiKey";
 import { devicesRepo } from "../db/devices";
 import { notificationsRepo } from "../db/notifications";
 import { sendPush } from "../services/firebase";
@@ -57,7 +58,7 @@ const broadcastSchema = z.object({
   data: z.record(z.string()).optional(),
 });
 
-router.post("/broadcast", requireAuth, async (req, res) => {
+router.post("/broadcast", requireApiKey, async (req, res) => {
   const payload = broadcastSchema.parse(req.body);
   const all = devicesRepo.findAllTokens();
   const tokens = all.map((d) => d.token);
