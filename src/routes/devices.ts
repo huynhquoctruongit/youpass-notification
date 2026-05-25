@@ -7,16 +7,19 @@ import { usersRepo } from "../db/users";
 
 const router = Router();
 
+const BROADCAST_USER_ID = "broadcast";
+
 const registerSchema = z.object({
-  user_id: z.string().min(1),
+  user_id: z.string().min(1).optional(),
   token: z.string().min(10),
   platform: z.enum(["ios", "android", "web"]),
 });
 
 router.post("/", requireApiKey, (req, res) => {
   const { user_id, token, platform } = registerSchema.parse(req.body);
-  usersRepo.upsertById(user_id);
-  const device = devicesRepo.upsert(user_id, token, platform);
+  const uid = user_id ?? BROADCAST_USER_ID;
+  usersRepo.upsertById(uid);
+  const device = devicesRepo.upsert(uid, token, platform);
   res.json({
     data: {
       id: device.id,
