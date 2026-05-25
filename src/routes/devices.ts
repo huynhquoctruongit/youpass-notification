@@ -29,6 +29,11 @@ router.post("/", requireApiKey, (req, res) => {
   });
 });
 
+router.get("/", requireApiKey, (req, res) => {
+  const list = devicesRepo.findAllTokens();
+  res.json({ data: list, total: list.length });
+});
+
 router.delete("/:token", requireApiKey, (req, res) => {
   const raw = req.params.token;
   const token = decodeURIComponent(Array.isArray(raw) ? raw[0] : raw);
