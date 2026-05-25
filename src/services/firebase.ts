@@ -5,11 +5,17 @@ import admin from "firebase-admin";
 let app: admin.app.App | null = null;
 
 const loadServiceAccount = (): admin.ServiceAccount | null => {
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (raw) {
     try {
-      return JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+      // strip surrounding quotes if accidentally added when pasting
+      const cleaned = raw.trim().replace(/^["']|["']$/g, "");
+      const parsed = JSON.parse(cleaned);
+      console.log("[firebase] Loaded service account for project:", parsed.project_id);
+      return parsed;
     } catch (err) {
-      console.error("[firebase] Invalid FIREBASE_SERVICE_ACCOUNT_JSON", err);
+      console.error("[firebase] Invalid FIREBASE_SERVICE_ACCOUNT_JSON — parse failed:", err);
+      console.error("[firebase] Value preview:", raw.slice(0, 50));
       return null;
     }
   }
