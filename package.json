@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx watch --ignore './*.sqlite*' --ignore './data.sqlite' src/server.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/server.js",
+    "start": "npx tsx src/server.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
