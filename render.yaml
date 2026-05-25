@@ -4,8 +4,8 @@ services:
     runtime: node
     region: singapore
     plan: free
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: npm install
+    startCommand: npx tsx src/server.ts
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
