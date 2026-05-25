@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 
 import { requireApiKey } from "../middleware/apiKey";
+import { asyncHandler } from "../middleware/asyncHandler";
 import { devicesRepo } from "../db/devices";
 import { usersRepo } from "../db/users";
 
@@ -15,7 +16,12 @@ const registerSchema = z.object({
   platform: z.enum(["ios", "android", "web"]),
 });
 
-router.post("/", requireApiKey, (req, res) => {
+router.get("/", requireApiKey, asyncHandler((req, res) => {
+  const list = devicesRepo.findAllTokens();
+  res.json({ data: list, total: list.length });
+}));
+
+router.post("/", requireApiKey, asyncHandler((req, res) => {
   const { user_id, token, platform } = registerSchema.parse(req.body);
   const uid = user_id ?? BROADCAST_USER_ID;
   usersRepo.upsertById(uid);
@@ -27,18 +33,13 @@ router.post("/", requireApiKey, (req, res) => {
       platform: device.platform,
     },
   });
-});
+}));
 
-router.get("/", requireApiKey, (req, res) => {
-  const list = devicesRepo.findAllTokens();
-  res.json({ data: list, total: list.length });
-});
-
-router.delete("/:token", requireApiKey, (req, res) => {
+router.delete("/:token", requireApiKey, asyncHandler((req, res) => {
   const raw = req.params.token;
   const token = decodeURIComponent(Array.isArray(raw) ? raw[0] : raw);
   const changes = devicesRepo.removeByToken(token);
   res.json({ data: { removed: changes } });
-});
+}));
 
 export default router;

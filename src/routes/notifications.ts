@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { requireAuth } from "../middleware/auth";
 import { requireApiKey } from "../middleware/apiKey";
+import { asyncHandler } from "../middleware/asyncHandler";
 import { devicesRepo } from "../db/devices";
 import { notificationsRepo } from "../db/notifications";
 import { sendPush } from "../services/firebase";
@@ -17,7 +18,7 @@ const sendSchema = z.object({
   data: z.record(z.string()).optional(),
 });
 
-router.post("/send", requireAuth, async (req, res) => {
+router.post("/send", requireAuth, asyncHandler(async (req, res) => {
   const payload = sendSchema.parse(req.body);
 
   const targetUserId = payload.to_self
@@ -28,9 +29,7 @@ router.post("/send", requireAuth, async (req, res) => {
   const tokens = devices.map((d) => d.token);
 
   if (tokens.length === 0) {
-    return res
-      .status(404)
-      .json({ message: "No registered devices for this user" });
+    return res.status(404).json({ message: "No registered devices for this user" });
   }
 
   const result = await sendPush({
@@ -41,7 +40,6 @@ router.post("/send", requireAuth, async (req, res) => {
   });
 
   result.invalidTokens.forEach((t) => devicesRepo.removeByToken(t));
-
   notificationsRepo.create({
     userId: targetUserId,
     title: payload.title,
@@ -50,7 +48,7 @@ router.post("/send", requireAuth, async (req, res) => {
   });
 
   res.json({ data: result });
-});
+}));
 
 const broadcastSchema = z.object({
   title: z.string().min(1),
@@ -58,7 +56,7 @@ const broadcastSchema = z.object({
   data: z.record(z.string()).optional(),
 });
 
-router.post("/broadcast", requireApiKey, async (req, res) => {
+router.post("/broadcast", requireApiKey, asyncHandler(async (req, res) => {
   const payload = broadcastSchema.parse(req.body);
   const all = devicesRepo.findAllTokens();
   const tokens = all.map((d) => d.token);
@@ -75,7 +73,6 @@ router.post("/broadcast", requireApiKey, async (req, res) => {
   });
 
   result.invalidTokens.forEach((t) => devicesRepo.removeByToken(t));
-
   notificationsRepo.create({
     userId: null,
     title: payload.title,
@@ -84,11 +81,11 @@ router.post("/broadcast", requireApiKey, async (req, res) => {
   });
 
   res.json({ data: result });
-});
+}));
 
-router.get("/", requireAuth, (req, res) => {
+router.get("/", requireAuth, asyncHandler((req, res) => {
   const list = notificationsRepo.listByUserId(req.user!.id);
   res.json({ data: list });
-});
+}));
 
 export default router;
